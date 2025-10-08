@@ -1,10 +1,3 @@
-#!/usr/bin/env python
-# coding: utf-8
-
-# In[ ]:
-
-
-get_ipython().system('pip install streamlit')
 import streamlit as st
 
 st.set_page_config(page_title="AI Resume Matcher", layout="wide")
