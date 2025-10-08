@@ -1,11 +1,3 @@
-#!/usr/bin/env python
-# coding: utf-8
-
-# In[ ]:
-
-
-get_ipython().system('pip install sentence-transformers scikit-learn')
-
 from sentence_transformers import SentenceTransformer, util
 import numpy as np
 
