@@ -9,23 +9,42 @@ import spacy
 from collections import Counter
 from sentence_transformers import SentenceTransformer, util
 import numpy as np
-import en_core_web_sm  # Import the spaCy model package
+import subprocess # <-- Make sure this import is added
 
 #
 # --- MODEL LOADING ---
 #
 
-# Load the spaCy model from the imported package
-nlp = en_core_web_sm.load()
+# Use st.cache_resource for models to load them only once
+@st.cache_resource
+def load_spacy_model(model_name="en_core_web_sm"):
+    """Loads the spaCy model, downloading if necessary."""
+    try:
+        # Try to load the model directly
+        nlp = spacy.load(model_name)
+    except OSError:
+        # If it fails, the model is not found. Download it.
+        st.info(f"First-time setup: Downloading spaCy model '{model_name}'. This may take a moment...")
+        try:
+            subprocess.run(["python", "-m", "spacy", "download", model_name], check=True)
+            nlp = spacy.load(model_name)
+        except subprocess.CalledProcessError as e:
+            st.error(f"Error downloading spaCy model: {e}")
+            st.stop()
+        except Exception as e:
+            st.error(f"An unexpected error occurred during model loading: {e}")
+            st.stop()
+    return nlp
 
-# Use st.cache_resource to load the Sentence Transformer model only once
 @st.cache_resource
 def load_sentence_model():
     """Loads the Sentence Transformer model."""
     return SentenceTransformer('all-MiniLM-L6-v2')
 
-# Assign the loaded model to a variable
+# Assign the loaded models to variables
+nlp = load_spacy_model()
 model = load_sentence_model()
+
 
 #
 # --- HELPER FUNCTIONS ---
@@ -96,16 +115,16 @@ if st.button("✨ Match Resumes"):
 
         for resume_file in uploaded_files:
             with st.spinner(f"Processing {resume_file.name}..."):
-                # 1. Extract and clean resume text
                 resume_text = extract_text(resume_file)
+                if not resume_text.strip():
+                    st.warning(f"Could not extract text from {resume_file.name}. Skipping.")
+                    continue
+
                 clean_resume = clean_text(resume_text)
-                
-                # 2. Calculate scores
                 resume_emb = model.encode(clean_resume)
                 sem_score = util.cos_sim(resume_emb, jd_emb).item() * 100
                 kw_score = compute_keyword_overlap(jd_keywords, clean_resume)
                 
-                # 3. Compute final weighted score
                 weight_sem = 0.7
                 weight_kw = 0.3
                 final_score = (weight_sem * sem_score) + (weight_kw * kw_score)
