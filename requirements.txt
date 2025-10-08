@@ -6,3 +6,4 @@ spacy
 sentence-transformers
 scikit-learn
 pandas
+en_core_web_sm
