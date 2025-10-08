@@ -1,12 +1,3 @@
-#!/usr/bin/env python
-# coding: utf-8
-
-# In[ ]:
-
-
-get_ipython().system('pip install spacy')
-get_ipython().system('python -m spacy download en_core_web_sm')
-
 import spacy
 from collections import Counter
 
